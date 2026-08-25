@@ -1,9 +1,5 @@
 import { site, tabs } from "@/site.config";
 
-import { CareerTab } from "./career-tab";
-import { HomeTab } from "./home-tab";
-import { ProjectsTab } from "./projects-tab";
-
 // Route-level ISR: the project stat strips (fetched in projects-tab.tsx)
 // refresh daily. Next requires a literal here — keep it in step with
 // REVALIDATE in stats.ts.
@@ -48,7 +44,10 @@ export default function Home() {
                 timing, so both ends of the stretched blob keep a shadow —
                 a single twin gets covered by the blob's far end, and Safari
                 drops shadows chained into the goo filter. */}
-            <span className="tab-thumb tab-thumb-shadow tab-thumb-lag" aria-hidden />
+            <span
+              className="tab-thumb tab-thumb-shadow tab-thumb-lag"
+              aria-hidden
+            />
             <span className="tab-thumb tab-thumb-shadow" aria-hidden />
             <span className="tab-goo" aria-hidden>
               <span className="tab-thumb tab-thumb-lag" />
@@ -66,11 +65,11 @@ export default function Home() {
       {/* pb-8 mirrors the panels' 2rem margin-top, so the glass card floats
           with equal breathing room above and below */}
       <main className="mx-auto w-full max-w-3xl grow px-4 pb-8 sm:px-6">
-        {/* Panels are matched to tabs by position — this order must mirror
-            `tabs` in site.config.tsx. */}
-        <HomeTab />
-        <ProjectsTab />
-        <CareerTab />
+        {/* Each tab brings its own panel from site.config.tsx; the CSS
+            matches panel N to radio N, so config order is the only order. */}
+        {tabs.map(({ id, Panel }) => (
+          <Panel key={id} />
+        ))}
       </main>
     </div>
   );

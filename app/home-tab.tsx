@@ -2,13 +2,17 @@ import Image from "next/image";
 
 import { home } from "@/site.config";
 
-/* The roll keyframes are generated from home.cycleWords, so the animation
-   always matches the row count — edit the list freely; the last word is where
-   the roll parks. It plays once per visit to the panel (see .cycler-track in
-   globals.css), so no duplicate first row is needed. */
-const cycleRows = home.cycleWords.length;
-const cycleSlot = 100 / cycleRows;
-const cycleKeyframes = `@keyframes cycle {
+export function HomeTab() {
+  /* The roll keyframes are generated from home.cycleWords, so the animation
+     always matches the row count — edit the list freely; the last word is
+     where the roll parks. It plays once per visit to the panel (see
+     .cycler-track in globals.css), so no duplicate first row is needed.
+     Computed inside the component (not at module scope) because site.config
+     imports this file for the tab registry — reading `home` during module
+     evaluation would hit the import cycle before the config exists. */
+  const cycleRows = home.cycleWords.length;
+  const cycleSlot = 100 / cycleRows;
+  const cycleKeyframes = `@keyframes cycle {
 ${home.cycleWords
   .map((_, i) => {
     const from = (i * cycleSlot).toFixed(2);
@@ -18,9 +22,8 @@ ${home.cycleWords
   })
   .join("\n")}
 }`;
-const cycleDuration = `${(cycleRows * 2.4).toFixed(1)}s`;
+  const cycleDuration = `${(cycleRows * 2.4).toFixed(1)}s`;
 
-export function HomeTab() {
   return (
     <article className="tab-panel stagger">
       <div className="flow-root">

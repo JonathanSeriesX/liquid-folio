@@ -1,18 +1,17 @@
 import { type Accent, career, type ExperienceRow } from "@/site.config";
 
-/* palette variables for the career lane's colour gradients — each row hands
-   its predecessor's colour to CSS as --xp-from (and gaps --xp-to as well) */
-const accentVar: Record<Accent, string> = {
-  "accent-azure": "var(--c-azure)",
-  "accent-amber": "var(--c-amber)",
-  "accent-violet": "var(--c-violet)",
-  "accent-emerald": "var(--c-emerald)",
-};
+/* palette variable for the career lane's colour gradients — each row hands
+   its predecessor's colour to CSS as --xp-from (and gaps --xp-to as well).
+   Derived from the class name: .accent-azure sets --accent from --c-azure,
+   so a new accent only needs the Accent union in site.config.tsx and the
+   .accent-<name>/--c-<name> pair in globals.css — no third map here. */
+const accentVar = (accent: Accent) =>
+  `var(--c-${accent.slice("accent-".length)})`;
 
 /* colour of an entry's lane segment, for the crossing gradients — an entry
    with no accent falls back to the site accent */
 const xpColor = (e?: ExperienceRow) =>
-  e && !("gap" in e) && e.accent ? accentVar[e.accent] : "var(--c-crimson)";
+  e && !("gap" in e) && e.accent ? accentVar(e.accent) : "var(--c-crimson)";
 
 export function CareerTab() {
   const { entries } = career;
