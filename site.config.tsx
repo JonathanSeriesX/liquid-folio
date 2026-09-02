@@ -4,14 +4,15 @@
    follows. The components in app/ read from here and never hardcode content.
 
    Fields that pair with something outside this file are flagged in comments —
-   the tab list mirrors the panel order in app/page.tsx, and themeColor mirrors
-   --paper in app/globals.css.
+   themeColor, for one, mirrors --paper in app/globals.css.
    =========================================================================== */
 
 import type { ReactNode } from "react";
 import { Montserrat } from "next/font/google";
 // import localFont from "next/font/local";
 
+import { CareerTab } from "@/app/career-tab";
+import { HomeTab } from "@/app/home-tab";
 import {
   GitHubIcon,
   LinkedInIcon,
@@ -19,6 +20,7 @@ import {
   // XIcon,
   // YouTubeIcon,
 } from "@/app/icons";
+import { ProjectsTab } from "@/app/projects-tab";
 import { countCsvRows, githubStars } from "@/app/stats";
 
 /* --- typeface -------------------------------------------------------------
@@ -66,12 +68,11 @@ export const fontCredit: FontCredit | null = null;
 
 /* --- shapes ---------------------------------------------------------------
    `accent` is a class from globals.css; leaving it off gives the site accent
-   (crimson). Add your own by declaring .accent-<name> alongside the others. */
+   (crimson). To add your own: extend the union below with "accent-<name>",
+   then declare --c-<name> and .accent-<name> in globals.css alongside the
+   others — the components derive everything else from the name. */
 export type Accent =
-  | "accent-azure"
-  | "accent-amber"
-  | "accent-violet"
-  | "accent-emerald";
+  "accent-azure" | "accent-amber" | "accent-violet" | "accent-emerald";
 
 export type ProjectIcon = { src: string } | { emoji: string };
 
@@ -91,9 +92,12 @@ export interface Social {
 }
 
 export interface Tab {
-  /** used for the radio/label pairing; must be unique */
+  /** doubles as the URL segment — /<id> — so keep it unique and URL-safe;
+      the first tab is served at / and its /<id> form redirects there */
   id: string;
   label: string;
+  /** the panel this tab shows — any component from app/, async is fine */
+  Panel: () => ReactNode;
 }
 
 export interface Interest {
@@ -243,12 +247,18 @@ export const socials: Social[] = [
 /* --- tabs ---------------------------------------------------------------
    Two to six. The picker folds onto two rows on narrow viewports once there
    are four or more (4 → 2+2, 5 → 3+2, 6 → 3+3), so long labels stay legible.
-   ORDER MATTERS: tab N shows the Nth panel rendered in app/page.tsx. */
+   Each tab carries its own panel component, so adding a tab is one entry
+   here plus one component file — app/(tabs)/ renders whatever this list
+   says, in this order, and gives every tab its own URL: the first at /, the
+   rest at /<id>. The sitemap follows suit. */
 export const tabs: Tab[] = [
-  { id: "home", label: "home" },
-  { id: "projects", label: "projects" },
-  { id: "career", label: "career" },
+  { id: "home", label: "home", Panel: HomeTab },
+  { id: "projects", label: "projects", Panel: ProjectsTab },
+  { id: "career", label: "career", Panel: CareerTab },
 ];
+
+/** A tab's path: the first tab is the site root, every other one is /<id>. */
+export const tabHref = (id: string) => (id === tabs[0].id ? "/" : `/${id}`);
 
 /* --- home ---------------------------------------------------------------- */
 

@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   title: site.title,
   description: site.description,
   robots: { index: true, follow: true },
+  // alternates.canonical is set per route in app/(tabs)/
   openGraph: {
     title: site.title,
     description: site.description,

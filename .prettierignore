@@ -1,0 +1,7 @@
+# build output
+.next/
+out/
+
+# generated
+next-env.d.ts
+pnpm-lock.yaml

@@ -1,45 +1,48 @@
-import { site, tabs } from "@/site.config";
+"use client";
 
-import { CareerTab } from "./career-tab";
-import { HomeTab } from "./home-tab";
-import { ProjectsTab } from "./projects-tab";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { CSSProperties, ReactNode } from "react";
 
-// Route-level ISR: the project stat strips (fetched in projects-tab.tsx)
-// refresh daily. Next requires a literal here — keep it in step with
-// REVALIDATE in stats.ts.
-export const revalidate = 86400;
+export interface TabLink {
+  id: string;
+  label: string;
+  href: string;
+}
 
-export default function Home() {
+export function TabShell({
+  tabs,
+  wordmark,
+  children,
+}: {
+  tabs: TabLink[];
+  wordmark: string;
+  children: ReactNode;
+}) {
+  const pathname = usePathname();
+  const active = tabs.findIndex((tab) => tab.href === pathname);
+
   return (
-    <div className="tabs flex grow flex-col">
-      {/* One radio per tab, ahead of everything that reacts to it: the CSS
-          reads them positionally (.tab-input:nth-of-type(N)), so no rule
-          anywhere needs to know a tab's name. */}
-      {tabs.map((tab, i) => (
-        <input
-          key={tab.id}
-          type="radio"
-          name="tabs"
-          id={`tab-${tab.id}`}
-          defaultChecked={i === 0}
-          className="tab-input"
-        />
-      ))}
-
+    <div
+      className="tabs flex grow flex-col"
+      // --tab-index drives the thumb geometry in globals.css. A route no
+      // tab owns hides the thumb instead of parking it on a wrong tab —
+      // nothing hits that today, since unknown paths 404 outside this layout.
+      data-tab-active={active === -1 ? "none" : undefined}
+      style={{ "--tab-index": String(Math.max(active, 0)) } as CSSProperties}
+    >
       <header className="site-header">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-3 sm:gap-6 sm:px-6">
           {/* items-center keeps the wordmark centred against the picker even
               when the picker folds onto two rows */}
-          <span className="mono font-medium">{site.wordmark}</span>
+          <span className="mono font-medium">{wordmark}</span>
           <nav
             className="tab-bar"
             aria-label="Sections"
             // data-tabs picks the narrow-viewport row split, --tab-count does
             // the thumb geometry; both live in globals.css
             data-tabs={tabs.length}
-            style={
-              { "--tab-count": String(tabs.length) } as React.CSSProperties
-            }
+            style={{ "--tab-count": String(tabs.length) } as CSSProperties}
           >
             {/* two thumb copies under a goo filter: the fast one leads, the
                 slow one drags behind, and #lg-goo melts the pair into a
@@ -48,16 +51,23 @@ export default function Home() {
                 timing, so both ends of the stretched blob keep a shadow —
                 a single twin gets covered by the blob's far end, and Safari
                 drops shadows chained into the goo filter. */}
-            <span className="tab-thumb tab-thumb-shadow tab-thumb-lag" aria-hidden />
+            <span
+              className="tab-thumb tab-thumb-shadow tab-thumb-lag"
+              aria-hidden
+            />
             <span className="tab-thumb tab-thumb-shadow" aria-hidden />
             <span className="tab-goo" aria-hidden>
               <span className="tab-thumb tab-thumb-lag" />
               <span className="tab-thumb" />
             </span>
-            {tabs.map((tab) => (
-              <label key={tab.id} htmlFor={`tab-${tab.id}`}>
+            {tabs.map((tab, i) => (
+              <Link
+                key={tab.id}
+                href={tab.href}
+                aria-current={i === active ? "page" : undefined}
+              >
                 {tab.label}
-              </label>
+              </Link>
             ))}
           </nav>
         </div>
@@ -66,11 +76,7 @@ export default function Home() {
       {/* pb-8 mirrors the panels' 2rem margin-top, so the glass card floats
           with equal breathing room above and below */}
       <main className="mx-auto w-full max-w-3xl grow px-4 pb-8 sm:px-6">
-        {/* Panels are matched to tabs by position — this order must mirror
-            `tabs` in site.config.tsx. */}
-        <HomeTab />
-        <ProjectsTab />
-        <CareerTab />
+        {children}
       </main>
     </div>
   );
