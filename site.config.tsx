@@ -92,7 +92,8 @@ export interface Social {
 }
 
 export interface Tab {
-  /** used for the radio/label pairing; must be unique */
+  /** doubles as the URL segment — /<id> — so keep it unique and URL-safe;
+      the first tab is served at / and its /<id> form redirects there */
   id: string;
   label: string;
   /** the panel this tab shows — any component from app/, async is fine */
@@ -247,13 +248,17 @@ export const socials: Social[] = [
    Two to six. The picker folds onto two rows on narrow viewports once there
    are four or more (4 → 2+2, 5 → 3+2, 6 → 3+3), so long labels stay legible.
    Each tab carries its own panel component, so adding a tab is one entry
-   here plus one component file — app/page.tsx renders whatever this list
-   says, in this order. */
+   here plus one component file — app/(tabs)/ renders whatever this list
+   says, in this order, and gives every tab its own URL: the first at /, the
+   rest at /<id>. The sitemap follows suit. */
 export const tabs: Tab[] = [
   { id: "home", label: "home", Panel: HomeTab },
   { id: "projects", label: "projects", Panel: ProjectsTab },
   { id: "career", label: "career", Panel: CareerTab },
 ];
+
+/** A tab's path: the first tab is the site root, every other one is /<id>. */
+export const tabHref = (id: string) => (id === tabs[0].id ? "/" : `/${id}`);
 
 /* --- home ---------------------------------------------------------------- */
 

@@ -229,42 +229,23 @@ h1 {
     margin-top: 0.15em;
   }
 
-  /* ---- liquid-glass segmented tabs: hidden radios + :has(), no JS ----
+  /* ---- liquid-glass segmented tabs ----
+     Every tab is a route (app/(tabs)/) and the bar is a row of links.
      Nothing here names a tab, so the bar takes 2–6 of them as-is. Two numbers
-     drive the whole thing:
+     drive the whole thing, both set inline by tab-shell.tsx:
 
-       --tab-count  how many tabs exist   — set inline by page.tsx
-       --tab-index  which one is checked  — set by the :has() rules below
+       --tab-count  how many tabs exist
+       --tab-index  which one matches the current pathname
 
      --tab-cols (columns in the current layout) falls out of those, and the
      thumb derives its own row and column from them with mod()/round(). Four
      or more tabs fold onto two rows under 40rem — 4 → 2+2, 5 → 3+2, 6 → 3+3
      — where flex-wrap centres a short bottom row and --tab-row-shift nudges
      the thumb by the matching half cell. */
-  .tab-input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
+  /* a route no tab owns gets no thumb rather than a wrong one — nothing hits
+     this today, since unknown paths 404 outside the tabs layout */
+  .tabs[data-tab-active="none"] .tab-thumb {
     opacity: 0;
-  }
-
-  .tabs:has(.tab-input:nth-of-type(1):checked) {
-    --tab-index: 0;
-  }
-  .tabs:has(.tab-input:nth-of-type(2):checked) {
-    --tab-index: 1;
-  }
-  .tabs:has(.tab-input:nth-of-type(3):checked) {
-    --tab-index: 2;
-  }
-  .tabs:has(.tab-input:nth-of-type(4):checked) {
-    --tab-index: 3;
-  }
-  .tabs:has(.tab-input:nth-of-type(5):checked) {
-    --tab-index: 4;
-  }
-  .tabs:has(.tab-input:nth-of-type(6):checked) {
-    --tab-index: 5;
   }
 
   .tab-bar {
@@ -352,14 +333,14 @@ h1 {
     box-shadow: calc(var(--lean-x) * 3) 2px 10px rgba(0, 0, 0, 0.1);
   }
 
-  .tab-bar label {
+  .tab-bar a {
     position: relative;
     z-index: 1;
     flex: 0 0 calc(100% / var(--tab-cols));
     text-align: center;
     padding: 0.4rem 0.5rem;
     border-radius: 9999px;
-    cursor: pointer;
+    text-decoration: none;
     white-space: nowrap;
     user-select: none;
     -webkit-user-select: none;
@@ -369,33 +350,25 @@ h1 {
     transition: color 0.3s ease;
   }
 
-  .tab-bar label:hover {
+  .tab-bar a:hover {
     color: var(--ink);
   }
 
-  .tabs:has(.tab-input:nth-of-type(1):checked) .tab-bar label:nth-of-type(1),
-  .tabs:has(.tab-input:nth-of-type(2):checked) .tab-bar label:nth-of-type(2),
-  .tabs:has(.tab-input:nth-of-type(3):checked) .tab-bar label:nth-of-type(3),
-  .tabs:has(.tab-input:nth-of-type(4):checked) .tab-bar label:nth-of-type(4),
-  .tabs:has(.tab-input:nth-of-type(5):checked) .tab-bar label:nth-of-type(5),
-  .tabs:has(.tab-input:nth-of-type(6):checked) .tab-bar label:nth-of-type(6) {
+  /* aria-current is set by tab-shell.tsx on the link whose href matches */
+  .tab-bar a[aria-current="page"] {
     color: var(--ink);
     font-weight: 500;
   }
 
-  .tab-input:nth-of-type(1):focus-visible ~ * .tab-bar label:nth-of-type(1),
-  .tab-input:nth-of-type(2):focus-visible ~ * .tab-bar label:nth-of-type(2),
-  .tab-input:nth-of-type(3):focus-visible ~ * .tab-bar label:nth-of-type(3),
-  .tab-input:nth-of-type(4):focus-visible ~ * .tab-bar label:nth-of-type(4),
-  .tab-input:nth-of-type(5):focus-visible ~ * .tab-bar label:nth-of-type(5),
-  .tab-input:nth-of-type(6):focus-visible ~ * .tab-bar label:nth-of-type(6) {
+  .tab-bar a:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 
-  /* glass panels */
+  /* glass panels — one per route, so a panel is simply the page body */
   .tab-panel {
-    display: none;
+    display: flex;
+    flex-direction: column;
     margin-top: 2rem;
     /* 4.41vw hits the 2.25rem cap at 816px — the same point the column and
        --text-body freeze. A slope capping later (the old 3.2vw capped at
@@ -412,21 +385,10 @@ h1 {
       var(--card-shadow);
   }
 
-  /* Entrance via @starting-style transitions, not keyframes: animations on
-     display:none → flex re-renders replay unreliably in Chromium, while
-     @starting-style is specified to fire on every "becomes rendered". */
-  /* Panels are matched by position, so tab N shows the Nth <article> in
-     <main> — keep the panel order in page.tsx aligned with the tab order. */
-  .tabs:has(.tab-input:nth-of-type(1):checked) .tab-panel:nth-of-type(1),
-  .tabs:has(.tab-input:nth-of-type(2):checked) .tab-panel:nth-of-type(2),
-  .tabs:has(.tab-input:nth-of-type(3):checked) .tab-panel:nth-of-type(3),
-  .tabs:has(.tab-input:nth-of-type(4):checked) .tab-panel:nth-of-type(4),
-  .tabs:has(.tab-input:nth-of-type(5):checked) .tab-panel:nth-of-type(5),
-  .tabs:has(.tab-input:nth-of-type(6):checked) .tab-panel:nth-of-type(6) {
-    /* inherited hook for entry animations inside the panel — see .cycler-track */
-    --panel-active: 1;
-    display: flex;
-    flex-direction: column;
+  /* Entrance via @starting-style transitions, not keyframes: it is specified
+     to fire on every "becomes rendered", and a navigation mounts a fresh
+     panel, so the entrance replays on every tab visit. */
+  .tab-panel {
     opacity: 1;
     transform: translateY(0);
     filter: blur(0);
@@ -1216,7 +1178,7 @@ h1 {
 
   /* entrance stagger, superlogical style — @starting-style so it replays on
      every tab visit, same rationale as the panels */
-  .stagger > :not(.tab-input) {
+  .stagger > * {
     opacity: 1;
     transform: translateY(0);
     filter: blur(0);
@@ -1297,16 +1259,10 @@ h1 {
     color: var(--accent);
   }
 
-  /* One pass per visit, parking on the last word (fill: forwards). Scoped to
-     the checked state so re-selecting the tab always restarts the roll: the
-     animation property itself toggles with the tab, which is more dependable
-     than counting on display:none → flex cancel-and-restart. --panel-active
-     is set on the visible panel and inherits down, so the cycler works in
-     whichever panel it is dropped into. */
-  @container style(--panel-active: 1) {
-    .cycler-track {
-      animation: cycle var(--cycle-duration, 12s) var(--spring) forwards;
-    }
+  /* One pass per visit, parking on the last word (fill: forwards). Every
+     visit to the tab mounts a fresh panel, so the roll restarts on its own. */
+  .cycler-track {
+    animation: cycle var(--cycle-duration, 12s) var(--spring) forwards;
   }
 
   .cycler-track > span {
@@ -1406,7 +1362,7 @@ h1 {
     }
     .tab-thumb,
     .tab-panel,
-    .stagger > :not(.tab-input) {
+    .stagger > * {
       transition: none !important;
     }
   }

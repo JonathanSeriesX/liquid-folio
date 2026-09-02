@@ -1,15 +1,13 @@
 import type { MetadataRoute } from "next";
 
-import { site } from "@/site.config";
+import { site, tabHref, tabs } from "@/site.config";
 
-/* One page, one entry — the tabs are CSS state, not routes. Kept as code
-   rather than a static XML so the URL follows site.config. */
+/* One entry per tab, straight from the config — the first tab is the root
+   and carries the top priority, the rest sit one notch below. */
 export default function sitemap(): MetadataRoute.Sitemap {
-  return [
-    {
-      url: site.url,
-      changeFrequency: "monthly",
-      priority: 1,
-    },
-  ];
+  return tabs.map(({ id }, i) => ({
+    url: new URL(tabHref(id), site.url).href,
+    changeFrequency: "monthly",
+    priority: i === 0 ? 1 : 0.8,
+  }));
 }
