@@ -46,6 +46,34 @@ export const viewport: Viewport = {
 
 const beaconToken = site.analytics.cloudflareBeaconToken;
 
+/* JSON-LD: a schema.org ProfilePage wrapping a Person, so search engines
+   read this as "a page about this human" and can tie the social profiles
+   into one identity (sameAs). Browsers ignore the block entirely. Every
+   field comes from site.config: http(s) socials become sameAs, a mailto:
+   becomes email, and the OG image doubles as the portrait when present.
+   The `<` escape keeps a stray tag in the description from closing the
+   script early — JSON.stringify on its own does not guard against that. */
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ProfilePage",
+  url: site.url,
+  mainEntity: {
+    "@type": "Person",
+    name: site.name,
+    url: site.url,
+    description: site.description,
+    image: og ? new URL(og.src, site.url).href : undefined,
+    email: socials
+      .map(({ href }) => href)
+      .find((href) => href.startsWith("mailto:"))
+      ?.slice("mailto:".length),
+    sameAs: socials
+      .map(({ href }) => href)
+      .filter((href) => href.startsWith("http")),
+  },
+};
+const jsonLdHtml = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
+
 /* a credit is worth linking when there is somewhere to link to, and worth
    printing either way */
 function Credited({ label, href }: { label: string; href?: string }) {
@@ -116,6 +144,10 @@ export default function RootLayout({
               <ThemeSwitch />
             </div>
           </footer>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: jsonLdHtml }}
+          />
           {/* Cloudflare Web Analytics, classic defer variant. No token configured,
               no beacon: a fork stays untracked until its owner sets
               NEXT_PUBLIC_CF_BEACON_TOKEN. */}

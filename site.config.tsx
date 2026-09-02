@@ -152,6 +152,8 @@ export type ExperienceRow = ExperienceEntry | { gap: true };
 export interface SiteConfig {
   /** shown at the top left, and used as the OG site name */
   wordmark: string;
+  /** your name as search engines should know it — feeds the JSON-LD Person */
+  name: string;
   title: string;
   description: string;
   url: string;
@@ -191,6 +193,7 @@ export interface CareerContent {
 export const site: SiteConfig = {
   /** shown at the top left, and used as the OG site name */
   wordmark: "me_irl",
+  name: "Evgenii Ostrovskii",
   title: "me_irl",
   description: "Evgenii Ostrovskii's personal page",
   url: "https://evgenii.org",
