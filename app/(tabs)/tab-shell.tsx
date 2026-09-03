@@ -2,13 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { CSSProperties, ReactNode } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useRef } from "react";
+
+import { Ambient } from "../ambient";
 
 export interface TabLink {
   id: string;
   label: string;
   href: string;
+  /** the tab's ambient scene as CSS variables — see app/scene.ts */
+  scene: CSSProperties;
 }
+
+/* the navigation swing: how far the backdrop is thrown, and for how long.
+   Percentages are of the ambient layer, which is 120% of the viewport. */
+const SWING_X = 3.2;
+const SWING_Y = 1.1;
+const SWING_MS = 1800;
 
 export function TabShell({
   tabs,
@@ -21,6 +31,47 @@ export function TabShell({
 }) {
   const pathname = usePathname();
   const active = tabs.findIndex((tab) => tab.href === pathname);
+  const shown = Math.max(active, 0);
+
+  /* One-shot parallax on every tab change, in the direction of travel: the
+     page "pans" toward the new tab, so the backdrop slides the other way,
+     swells like a lens and settles. Web Animations API rather than CSS so it
+     restarts on every navigation without remounting the layer — a remount
+     would reset the scene variables and skip the colour tween. The previous
+     index lives in a ref: it is only compared, never rendered. */
+  const ambient = useRef<HTMLDivElement>(null);
+  const previous = useRef(shown);
+  useEffect(() => {
+    const from = previous.current;
+    previous.current = shown;
+    const el = ambient.current;
+    if (
+      from === shown ||
+      !el ||
+      typeof el.animate !== "function" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+    const dir = shown > from ? 1 : -1;
+    el.animate(
+      [
+        { transform: "translate3d(0, 0, 0) scale(1)" },
+        {
+          transform: `translate3d(${-dir * SWING_X}%, ${dir * SWING_Y}%, 0) scale(1.06)`,
+          offset: 0.38,
+          // quick out …
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        },
+        { transform: "translate3d(0, 0, 0) scale(1)" },
+      ],
+      {
+        duration: SWING_MS,
+        // … slow settle
+        easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+      },
+    );
+  }, [shown]);
 
   return (
     <div
@@ -28,9 +79,17 @@ export function TabShell({
       // --tab-index drives the thumb geometry in globals.css. A route no
       // tab owns hides the thumb instead of parking it on a wrong tab —
       // nothing hits that today, since unknown paths 404 outside this layout.
+      // The active tab's scene rides along: the ambient layer and the thumb
+      // both read it from here, and swapping it is what starts the tween.
       data-tab-active={active === -1 ? "none" : undefined}
-      style={{ "--tab-index": String(Math.max(active, 0)) } as CSSProperties}
+      style={
+        {
+          ...tabs[shown].scene,
+          "--tab-index": String(shown),
+        } as CSSProperties
+      }
     >
+      <Ambient ref={ambient} />
       <header className="site-header">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-3 sm:gap-6 sm:px-6">
           {/* items-center keeps the wordmark centred against the picker even

@@ -4,6 +4,10 @@ import { projects } from "@/site.config";
 
 import { LinkArrowIcon } from "./icons";
 
+/** rendered size of a project icon — shared with preload-images.tsx so the
+    preloaded srcset is byte-for-byte the one these <Image>s request */
+export const ICON_SIZES = "44px";
+
 export async function ProjectsTab() {
   /* Every project's stats() runs in parallel and is cached by the route's
      `revalidate`; a project without one simply gets no strip. */
@@ -23,7 +27,16 @@ export async function ProjectsTab() {
             <div className="project-head">
               <span className="project-icon" aria-hidden>
                 {"src" in entry.icon ? (
-                  <Image src={entry.icon.src} alt="" fill sizes="44px" />
+                  <Image
+                    src={entry.icon.src}
+                    alt=""
+                    fill
+                    sizes={ICON_SIZES}
+                    /* eager: the tile is 44px and above the fold, and lazy
+                       loading would hold the (already cached) fetch until
+                       after layout — a visible blink on every visit */
+                    loading="eager"
+                  />
                 ) : (
                   entry.icon.emoji
                 )}
@@ -64,7 +77,16 @@ export async function ProjectsTab() {
             <div className="project-head">
               <span className="project-icon" aria-hidden>
                 {"src" in entry.icon ? (
-                  <Image src={entry.icon.src} alt="" fill sizes="44px" />
+                  <Image
+                    src={entry.icon.src}
+                    alt=""
+                    fill
+                    sizes={ICON_SIZES}
+                    /* eager: the tile is 44px and above the fold, and lazy
+                       loading would hold the (already cached) fetch until
+                       after layout — a visible blink on every visit */
+                    loading="eager"
+                  />
                 ) : (
                   entry.icon.emoji
                 )}

@@ -2,6 +2,9 @@ import Image from "next/image";
 
 import { home } from "@/site.config";
 
+/** rendered size of the portrait — shared with preload-images.tsx */
+export const PHOTO_SIZES = "176px";
+
 export function HomeTab() {
   /* The roll keyframes are generated from home.cycleWords, so the animation
      always matches the row count — edit the list freely; the last word is
@@ -35,8 +38,14 @@ ${home.cycleWords
               src={home.photo.src}
               alt={home.photo.alt}
               fill
-              sizes="176px"
-              priority
+              sizes={PHOTO_SIZES}
+              /* the hero's largest paint: fetched first and never lazily.
+                 Not `preload` (the Next 16 name for `priority`): that would
+                 add a second <link rel=preload> beside the one the root
+                 layout already emits for every panel image, and React does
+                 not dedupe the pair. */
+              loading="eager"
+              fetchPriority="high"
               className="object-cover"
             />
           </div>

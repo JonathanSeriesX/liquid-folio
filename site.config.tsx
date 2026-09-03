@@ -9,7 +9,20 @@
 
 import type { ReactNode } from "react";
 import { Montserrat } from "next/font/google";
+import type { StaticImageData } from "next/image";
 // import localFont from "next/font/local";
+
+/* --- images ----------------------------------------------------------------
+   Import rasters rather than naming them by URL. Next hashes an imported
+   file's contents into its URL and serves it (and every resized copy) with
+   Cache-Control: immutable, so the browser fetches it exactly once per
+   change — a "/icons/foo.png" string has no such guarantee and re-downloads
+   on every visit to its panel. app/preload-images.tsx also warms every image
+   listed below from the root layout, so a panel never draws a blank tile
+   while its icon arrives. */
+import everycaseIcon from "@/public/icons/everycase.avif";
+import twixodusIcon from "@/public/icons/twixodus.avif";
+import portrait from "@/public/me.jpg";
 
 import { CareerTab } from "@/app/career-tab";
 import { HomeTab } from "@/app/home-tab";
@@ -74,7 +87,8 @@ export const fontCredit: FontCredit | null = null;
 export type Accent =
   "accent-azure" | "accent-amber" | "accent-violet" | "accent-emerald";
 
-export type ProjectIcon = { src: string } | { emoji: string };
+/** an imported raster (see the images block above) or an emoji */
+export type ProjectIcon = { src: StaticImageData } | { emoji: string };
 
 export interface FontCredit {
   /** the typeface */
@@ -91,6 +105,36 @@ export interface Social {
   Icon: () => ReactNode;
 }
 
+/* --- ambient scenes ---------------------------------------------------------
+   The soft glow behind the page is three lights and an optional wash, and
+   every tab may place them differently. The SAME three lights exist on every
+   tab, so switching tabs sends each one travelling to its new spot and colour
+   (globals.css tweens them via @property) — a deterministic journey, so
+   projects → career always looks the same. Colours name the theme-aware glow
+   palette in globals.css (--gl-*); a raw hex is used as-is in every theme. */
+export type GlowColor =
+  "crimson" | "azure" | "amber" | "violet" | "emerald" | `#${string}`;
+
+export interface Glow {
+  color: GlowColor;
+  /** centre, as % of the viewport (0 = left/top, 100 = right/bottom; a
+      little outside that range parks a light half off-screen) */
+  x: number;
+  y: number;
+  /** radii, as % of the viewport — default 45 × 38 */
+  w?: number;
+  h?: number;
+  /** brightness multiplier; 1 is the site's standard glow, 0 hides it */
+  strength?: number;
+}
+
+export interface Scene {
+  /** exactly three: light 1 also tints the tab thumb */
+  glows: [Glow, Glow, Glow];
+  /** faint page-wide tint fading down from the top */
+  wash?: GlowColor;
+}
+
 export interface Tab {
   /** doubles as the URL segment — /<id> — so keep it unique and URL-safe;
       the first tab is served at / and its /<id> form redirects there */
@@ -98,6 +142,9 @@ export interface Tab {
   label: string;
   /** the panel this tab shows — any component from app/, async is fine */
   Panel: () => ReactNode;
+  /** how the backdrop is lit while this tab is open; omit for the default
+      (crimson corners, amber top right — see app/scene.ts) */
+  scene?: Scene;
 }
 
 export interface Interest {
@@ -167,8 +214,9 @@ export interface SiteConfig {
 }
 
 export interface HomeContent {
-  /** null drops the portrait and lets the hero run full width */
-  photo: { src: string; alt: string } | null;
+  /** null drops the portrait and lets the hero run full width; src is an
+      imported file (see the images block above) */
+  photo: { src: StaticImageData; alt: string } | null;
   headline: ReactNode;
   cycleWords: string[];
   cycleLabel: string;
@@ -255,9 +303,49 @@ export const socials: Social[] = [
    says, in this order, and gives every tab its own URL: the first at /, the
    rest at /<id>. The sitemap follows suit. */
 export const tabs: Tab[] = [
-  { id: "home", label: "home", Panel: HomeTab },
-  { id: "projects", label: "projects", Panel: ProjectsTab },
-  { id: "career", label: "career", Panel: CareerTab },
+  {
+    id: "home",
+    label: "home",
+    Panel: HomeTab,
+    /* warm: crimson in two corners, amber up top */
+    scene: {
+      glows: [
+        { color: "crimson", x: 15, y: 2, w: 50, h: 40 },
+        { color: "amber", x: 85, y: 6, w: 42, h: 34, strength: 1.4 },
+        { color: "crimson", x: 75, y: 96, w: 45, h: 38 },
+      ],
+    },
+  },
+  {
+    id: "projects",
+    label: "projects",
+    Panel: ProjectsTab,
+    /* cool: azure takes the top right, violet pools bottom left, a small
+       crimson keeps the brand in frame */
+    scene: {
+      glows: [
+        { color: "azure", x: 86, y: 8, w: 58, h: 48, strength: 1.3 },
+        { color: "violet", x: 8, y: 90, w: 50, h: 42, strength: 1.4 },
+        { color: "crimson", x: 22, y: 4, w: 36, h: 30, strength: 0.8 },
+      ],
+      wash: "azure",
+    },
+  },
+  {
+    id: "career",
+    label: "career",
+    Panel: CareerTab,
+    /* the timeline's own colours: emerald leads, azure settles low right,
+       violet peeks over the top edge */
+    scene: {
+      glows: [
+        { color: "emerald", x: 10, y: 12, w: 54, h: 46, strength: 1.3 },
+        { color: "azure", x: 92, y: 86, w: 48, h: 40, strength: 1.2 },
+        { color: "violet", x: 60, y: -4, w: 44, h: 32, strength: 0.9 },
+      ],
+      wash: "emerald",
+    },
+  },
 ];
 
 /** A tab's path: the first tab is the site root, every other one is /<id>. */
@@ -266,7 +354,7 @@ export const tabHref = (id: string) => (id === tabs[0].id ? "/" : `/${id}`);
 /* --- home ---------------------------------------------------------------- */
 
 export const home: HomeContent = {
-  photo: { src: "/me.jpg", alt: "Evgenii" },
+  photo: { src: portrait, alt: "Evgenii" },
 
   /* the line before the rolling words; the roll is appended inline */
   headline: (
@@ -330,7 +418,7 @@ export const projects: ProjectsContent = {
     {
       name: "Twixodus",
       href: "https://twixodus.evgenii.org",
-      icon: { emoji: "🕊️" },
+      icon: { src: twixodusIcon },
       year: "2025 — today",
       accent: "accent-azure",
       pills: ["Swift", "local LLMs"],
@@ -350,7 +438,7 @@ export const projects: ProjectsContent = {
     {
       name: "Finest Woven",
       href: "https://everycase.org",
-      icon: { src: "/icons/everycase.png" },
+      icon: { src: everycaseIcon },
       year: "2023 — today",
       pills: ["Next.js", "MongoDB", "data scraping"],
       bio: "The one and only database of accessories made by Apple. Ultra-fast and non-intrusive, as every website should be.",

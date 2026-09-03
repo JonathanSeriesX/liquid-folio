@@ -10,8 +10,6 @@
   --muted: #7b746f;
   --rule: #1d1a161f;
   --accent: #e3504f;
-  --glow-a: #e3504f30;
-  --glow-b: #f5a62345;
   --glass: rgba(252, 250, 246, 0.55);
   --thumb: rgba(255, 255, 255, 0.92);
 
@@ -23,6 +21,17 @@
   --c-amber: #c07a10;
   --c-violet: #7a58d0;
   --c-emerald: #109467;
+  /* glow palette — what a Scene's colour names resolve to (site.config.tsx,
+     Tab.scene). Separate from --c-*: those are tuned to carry text on the
+     paper, these to bloom behind it, so light mode gets brighter, more
+     saturated versions. --glow-alpha is the standard brightness of one light
+     before its own strength multiplier. */
+  --gl-crimson: #e3504f;
+  --gl-azure: #2193e6;
+  --gl-amber: #f5a623;
+  --gl-violet: #7a58d0;
+  --gl-emerald: #10b981;
+  --glow-alpha: 19%;
   /* virtual light: --mxn/--myn are written by liquid-pointer.tsx, [-1, 1]
      from the viewport centre, smoothed. Every shadow below leans away from
      the pointer through these two lengths; with no JS (or reduced motion)
@@ -56,8 +65,7 @@ html.dark {
   --muted: #b3b3b3;
   --rule: #eceae724;
   --accent: #ff4d4d;
-  --glow-a: #ff4d4d38;
-  --glow-b: #b3541e45;
+  --glow-alpha: 22%;
   --glass: rgba(36, 32, 30, 0.5);
   --thumb: rgba(66, 60, 56, 0.95);
   --sheen: rgba(255, 255, 255, 0.11);
@@ -72,8 +80,7 @@ html.black {
   --muted: #b3b3b3;
   --rule: #eceae724;
   --accent: #ff4d4d;
-  --glow-a: #ff4d4d2b;
-  --glow-b: #b3541e38;
+  --glow-alpha: 17%;
   --glass: rgba(24, 21, 20, 0.55);
   --thumb: rgba(52, 47, 44, 0.95);
   --sheen: rgba(255, 255, 255, 0.09);
@@ -88,6 +95,119 @@ html:is(.dark, .black) {
   --c-amber: #f5a623;
   --c-violet: #a78bfa;
   --c-emerald: #34d399;
+  /* glows go the other way in the dark: deeper and less saturated than the
+     text palette, so a light reads as a warm pool rather than a neon sign */
+  --gl-crimson: #ff4d4d;
+  --gl-azure: #2e8fd8;
+  --gl-amber: #b3541e;
+  --gl-violet: #7b5be0;
+  --gl-emerald: #14a37a;
+}
+
+/* ---- ambient scene ----
+   The backdrop is three lights and a wash whose geometry and colour arrive
+   as custom properties from the active tab's scene (app/scene.ts writes
+   them, tab-shell.tsx puts them on .tabs). Registering each one gives it a
+   type, and a typed custom property can be TRANSITIONED — so when a
+   navigation swaps one scene's values for the next, every centre, radius and
+   colour tweens where an unregistered property would snap. inherits: true
+   is what lets .ambient-glow, several levels down, pick them up from .tabs.
+   Initial values mirror the fallback scene, so the layer paints sensibly
+   before any scene reaches it. */
+@property --g1-x {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 15%;
+}
+@property --g1-y {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 2%;
+}
+@property --g1-w {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+@property --g1-h {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 40%;
+}
+@property --g1-c {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e3504f;
+}
+@property --g1-a {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --g2-x {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 85%;
+}
+@property --g2-y {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 6%;
+}
+@property --g2-w {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 42%;
+}
+@property --g2-h {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 34%;
+}
+@property --g2-c {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #f5a623;
+}
+@property --g2-a {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1.4;
+}
+@property --g3-x {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 75%;
+}
+@property --g3-y {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 96%;
+}
+@property --g3-w {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 45%;
+}
+@property --g3-h {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 38%;
+}
+@property --g3-c {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e3504f;
+}
+@property --g3-a {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --wash-c {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
 }
 
 @theme inline {
@@ -113,18 +233,89 @@ html.no-theme-fade * {
   transition: none !important;
 }
 
-/* ambient glow behind everything — slowly drifting */
-body::before {
-  content: "";
+/* the ambient backdrop (app/ambient.tsx) — fixed behind everything. The
+   outer layer only exists to take the navigation swing (a one-shot
+   transform from tab-shell.tsx); oversized by 10% a side so neither that
+   nor the drift below ever shows an edge. */
+.ambient {
   position: fixed;
   inset: -10%;
   z-index: -1;
   pointer-events: none;
+}
+
+/* the lights themselves. Each radial reads its own six registered
+   properties; the wash is a page-wide tint fading down from the top. Colours
+   arrive fully opaque and are cut to glow strength here — --glow-alpha per
+   theme times the light's own strength — so a scene never has to know how
+   bright a glow should be on which paper.
+
+   Three motions stack on this one element without touching each other:
+   the endless drift (animation → transform), the pointer lean (translate,
+   a separate property: the whole sky leans a touch toward the virtual
+   light every other shadow leans away from), and the scene tween
+   (transition on the custom properties). The tween is staggered — colour
+   lands first, then geometry; light 1 leads and light 3 trails — so a tab
+   change reads as three lights each finding its place rather than one
+   backdrop dissolving into another. */
+.ambient-glow {
+  position: absolute;
+  inset: 0;
   background:
-    radial-gradient(50% 40% at 15% 2%, var(--glow-a), transparent 70%),
-    radial-gradient(42% 34% at 85% 6%, var(--glow-b), transparent 70%),
-    radial-gradient(45% 38% at 75% 96%, var(--glow-a), transparent 72%);
+    radial-gradient(
+      var(--g1-w) var(--g1-h) at var(--g1-x) var(--g1-y),
+      color-mix(
+        in srgb,
+        var(--g1-c) calc(var(--glow-alpha) * var(--g1-a)),
+        transparent
+      ),
+      transparent 70%
+    ),
+    radial-gradient(
+      var(--g2-w) var(--g2-h) at var(--g2-x) var(--g2-y),
+      color-mix(
+        in srgb,
+        var(--g2-c) calc(var(--glow-alpha) * var(--g2-a)),
+        transparent
+      ),
+      transparent 70%
+    ),
+    radial-gradient(
+      var(--g3-w) var(--g3-h) at var(--g3-x) var(--g3-y),
+      color-mix(
+        in srgb,
+        var(--g3-c) calc(var(--glow-alpha) * var(--g3-a)),
+        transparent
+      ),
+      transparent 72%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--wash-c) 7%, transparent),
+      transparent 70%
+    );
+  translate: calc(var(--mxn, 0) * 1.4%) calc(var(--myn, 0) * 1.4%);
   animation: glow-drift 38s ease-in-out infinite alternate;
+  transition:
+    --g1-c 1.3s ease,
+    --g1-a 1.3s ease,
+    --g1-x 2.2s var(--spring),
+    --g1-y 2.2s var(--spring),
+    --g1-w 2.2s var(--spring),
+    --g1-h 2.2s var(--spring),
+    --g2-c 1.4s ease 0.08s,
+    --g2-a 1.4s ease 0.08s,
+    --g2-x 2.5s var(--spring) 0.08s,
+    --g2-y 2.5s var(--spring) 0.08s,
+    --g2-w 2.5s var(--spring) 0.08s,
+    --g2-h 2.5s var(--spring) 0.08s,
+    --g3-c 1.3s ease 0.16s,
+    --g3-a 1.3s ease 0.16s,
+    --g3-x 2s var(--spring) 0.16s,
+    --g3-y 2s var(--spring) 0.16s,
+    --g3-w 2s var(--spring) 0.16s,
+    --g3-h 2s var(--spring) 0.16s,
+    --wash-c 1.5s ease;
 }
 
 @keyframes glow-drift {
@@ -311,16 +502,24 @@ h1 {
       calc(var(--tab-row) * 100%)
     );
     border-radius: 9999px;
-    background: var(--thumb);
+    /* a touch of the scene's lead light (--g1-c, from .tabs) in the pill,
+       so the thumb visibly belongs to the sky behind it; recolours on the
+       same beat as the light itself */
+    background: color-mix(in srgb, var(--g1-c) 12%, var(--thumb));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    /* the lead thumb: quick, with a slight overshoot for the snap */
-    transition: transform 0.42s cubic-bezier(0.3, 1.25, 0.4, 1);
+    /* the lead thumb: quick, with a slight overshoot for the snap. The
+       motion is a variable so .tab-thumb-lag can slow it without restating
+       (and losing) the colour transition. */
+    --thumb-motion: 0.42s cubic-bezier(0.3, 1.25, 0.4, 1);
+    transition:
+      transform var(--thumb-motion),
+      background-color 1s ease;
   }
 
   /* the drag thumb: same journey, slower — the separation between the two
      is what the goo filter turns into the stretch */
   .tab-thumb-lag {
-    transition: transform 0.6s var(--spring);
+    --thumb-motion: 0.6s var(--spring);
   }
 
   /* the shadow twins: one rides the lead timing, one the lag, each outside
@@ -1352,8 +1551,12 @@ h1 {
 
   @media (prefers-reduced-motion: reduce) {
     .xp-live::after,
-    body::before {
+    .ambient-glow {
       animation: none !important;
+    }
+    /* scenes still change per tab, they just cut instead of tweening */
+    .ambient-glow {
+      transition: none !important;
     }
     /* zero duration + fill forwards = the cycler sits on its parked word
        with no motion at all */

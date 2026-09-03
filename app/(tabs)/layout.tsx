@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { site, tabHref, tabs } from "@/site.config";
 
+import { sceneStyle } from "../scene";
 import { TabShell } from "./tab-shell";
 
 // Route-level ISR for every tab: the project stat strips (fetched in
@@ -13,13 +14,19 @@ export const revalidate = 86400;
    navigation — that is what lets the thumb glide between tabs instead of
    snapping. The shell is a Client Component because the active tab comes
    from the pathname, which a layout can't read on the server. It receives
-   plain data (ids, labels, hrefs), never the panel components, so nothing
-   from site.config lands in the client bundle. */
+   plain data (ids, labels, hrefs, and each tab's scene already flattened
+   to CSS variables), never the panel components, so nothing from
+   site.config lands in the client bundle. */
 export default function TabsLayout({ children }: { children: ReactNode }) {
   return (
     <TabShell
       wordmark={site.wordmark}
-      tabs={tabs.map(({ id, label }) => ({ id, label, href: tabHref(id) }))}
+      tabs={tabs.map(({ id, label, scene }) => ({
+        id,
+        label,
+        href: tabHref(id),
+        scene: sceneStyle(scene),
+      }))}
     >
       {children}
     </TabShell>

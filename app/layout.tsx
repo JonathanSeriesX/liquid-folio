@@ -7,6 +7,7 @@ import { bodyFont, fontCredit, site, socials } from "@/site.config";
 
 import { LiquidDefs } from "./liquid-defs";
 import { LiquidPointer } from "./liquid-pointer";
+import { PreloadImages } from "./preload-images";
 import { ThemeSwitch } from "./theme-switch";
 
 /* no share image configured → the cards carry title and description only,
@@ -105,6 +106,7 @@ export default function RootLayout({
           enableColorScheme={false}
         >
           <div className="grain" aria-hidden />
+          <PreloadImages />
           <LiquidDefs />
           <LiquidPointer />
           {children}

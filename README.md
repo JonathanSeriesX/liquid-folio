@@ -21,5 +21,8 @@ Everything — every word, link, colour-coded accent and live number — lives i
 hardcode nothing, so that is usually the only file you touch. Replace my
 content with yours and the design follows.
 
+- **Scenes**: each tab lights the backdrop its own way — three soft lights
+  and a wash, placed in `tabs[].scene`. The same three lights exist on every
+  tab, so switching tabs sends them travelling to their new spots and colours.
 - **Analytics** are off unless you set `NEXT_PUBLIC_CF_BEACON_TOKEN`
   (Cloudflare Web Analytics); no token, no script tag. See `.env.example`.
