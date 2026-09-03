@@ -397,7 +397,7 @@ export const career: CareerContent = {
       meta: "under NDA",
       live: true,
       bio: "¯\\_(ツ)_/¯",
-      pills: ["Grafana", "ArgoCD"],
+      pills: ["Grafana", "Argo CD", "AI Orchestration"],
     },
     {
       years: "2024–25",
@@ -405,7 +405,7 @@ export const career: CareerContent = {
       meta: "SRE · Porto",
       accent: "accent-emerald",
       bio: "Improved monitoring, automated stuff.",
-      pills: ["Kubernetes", "AWS", "Grafana", "Ansible"],
+      pills: ["VictoriaMetrics", "Ansible", "Kubernetes"],
     },
     {
       years: "2022–24",
@@ -413,7 +413,7 @@ export const career: CareerContent = {
       meta: "SRE · Podgorica",
       accent: "accent-azure",
       bio: "Kept live trading systems running.",
-      pills: ["Kubernetes", "Terraform", "AWS", "CI/CD"],
+      pills: ["ELK", "Docker", "Jenkins"],
     },
     { gap: true },
     {
@@ -422,7 +422,6 @@ export const career: CareerContent = {
       meta: "Saint Petersburg",
       accent: "accent-violet",
       bio: "Studied programming, cryptography, signal processing, and much more.",
-      //pills: ["cryptography", "PKI", "x86 asm"],
     },
   ],
 };
