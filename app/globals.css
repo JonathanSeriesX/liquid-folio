@@ -88,6 +88,20 @@ html.black {
     rgba(0, 0, 0, 0.65);
 }
 
+/* Refractive glass (app/liquid-glass.tsx) is on: the wash thins out so the
+   bent backdrop shows through the rim instead of hiding under a 55% tint. */
+html.liquid {
+  --glass: rgba(252, 250, 246, 0.28);
+}
+
+html.liquid.dark {
+  --glass: rgba(36, 32, 30, 0.28);
+}
+
+html.liquid.black {
+  --glass: rgba(24, 21, 20, 0.3);
+}
+
 /* dark-mode accent palette, shared by dark and pitch black */
 html:is(.dark, .black) {
   --c-crimson: #ff4d4d;

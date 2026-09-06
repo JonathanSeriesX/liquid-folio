@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { bodyFont, fontCredit, site, socials } from "@/site.config";
 
 import { LiquidDefs } from "./liquid-defs";
+import { LiquidGlass } from "./liquid-glass";
 import { LiquidPointer } from "./liquid-pointer";
 import { PreloadImages } from "./preload-images";
 import { ThemeSwitch } from "./theme-switch";
@@ -109,6 +110,7 @@ export default function RootLayout({
           <PreloadImages />
           <LiquidDefs />
           <LiquidPointer />
+          <LiquidGlass />
           {children}
           <footer className="mx-auto w-full max-w-3xl px-6">
             <div className="section flex flex-wrap items-center justify-between gap-4">
